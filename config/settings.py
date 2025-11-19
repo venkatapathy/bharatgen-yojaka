@@ -15,7 +15,12 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-this-in-produc
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+# Security Settings for Development
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None  # Allow cross-origin in dev for non-HTTPS IPs
+
+ALLOWED_HOSTS = ['*']  # Allow all hosts for development
+# For production: ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,0.0.0.0,.localhost,10.129.6.170').split(',')
+# For production, add specific IPs to .env: ALLOWED_HOSTS=yourdomain.com,your.ip.address
 
 # Application definition
 INSTALLED_APPS = [
