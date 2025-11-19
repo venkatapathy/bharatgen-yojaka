@@ -14,7 +14,7 @@ async function loadPathDetail() {
     const slug = window.location.pathname.split('/')[2];
     
     try {
-        const paths = await apiCall(`/api/learning/paths/?search=${slug}`);
+        const paths = await apiCall(`/api/learning/paths/?slug=${slug}`);
         const path = paths.results ? paths.results[0] : paths[0];
         
         if (!path) {

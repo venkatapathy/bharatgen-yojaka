@@ -3,15 +3,17 @@
 {% block title %}Module - AI Learning Platform{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div id="moduleDetail">
-        <div class="loading">Loading module...</div>
+<div id="moduleDetail">
+    <div class="container" style="padding-top: 4rem; text-align: center;">
+        <div class="spinner" style="margin: 0 auto;"></div>
+        <p style="margin-top: 1rem;">Loading your immersive experience...</p>
     </div>
 </div>
 
 <script>
 let currentContentIndex = 0;
 let contents = [];
+let moduleTitle = "";
 
 async function loadModuleDetail() {
     const moduleId = window.location.pathname.split('/')[2];
@@ -19,46 +21,62 @@ async function loadModuleDetail() {
     try {
         const module = await apiCall(`/api/learning/modules/${moduleId}/`);
         contents = module.contents;
+        moduleTitle = module.title;
         
-        document.getElementById('moduleDetail').innerHTML = `
-            <div class="module-detail">
-                <div class="breadcrumb">
-                    <a href="/learning-paths/">Learning Paths</a> / 
-                    <a href="/learning-paths/${module.learning_path}/">Back to Path</a>
-                </div>
-                
-                <h1>${module.title}</h1>
-                <p class="lead">${module.description}</p>
-                
-                <div class="content-container">
-                    <div class="content-sidebar">
-                        <h3>Contents</h3>
-                        <ul class="content-list" id="contentList">
-                            ${contents.map((content, index) => `
-                                <li class="content-item ${index === 0 ? 'active' : ''}" onclick="showContent(${index})">
-                                    <span class="content-number">${index + 1}</span>
-                                    <div>
-                                        <div>${content.title}</div>
-                                        <small>${content.content_type} • ${content.estimated_minutes}min</small>
-                                    </div>
-                                </li>
-                            `).join('')}
-                        </ul>
-                    </div>
-                    
-                    <div class="content-main" id="contentMain">
-                        <!-- Content will be loaded here -->
-                    </div>
-                </div>
-            </div>
-        `;
-        
+        renderModule();
         showContent(0);
         
     } catch (error) {
         console.error('Error loading module:', error);
-        document.getElementById('moduleDetail').innerHTML = '<p class="error">Failed to load module.</p>';
+        document.getElementById('moduleDetail').innerHTML = `
+            <div class="container">
+                <div class="alert alert-error">
+                    Failed to load module. Please try again later.
+                </div>
+                <a href="/learning-paths/" class="btn btn-primary">Back to Learning Paths</a>
+            </div>
+        `;
     }
+}
+
+function renderModule() {
+    document.getElementById('moduleDetail').innerHTML = `
+        <div class="immersive-container">
+            <aside class="immersive-sidebar">
+                <div style="margin-bottom: 2rem;">
+                    <a href="/learning-paths/" style="text-decoration: none; color: var(--text-secondary); font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                        ← Back to Paths
+                    </a>
+                    <h3 style="font-size: 1.25rem; color: var(--text-primary); margin: 0;">${moduleTitle}</h3>
+                </div>
+                
+                <div style="margin-bottom: 1rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">
+                    Table of Contents
+                </div>
+                
+                <ul class="content-list" id="contentList">
+                    ${contents.map((content, index) => `
+                        <li class="content-item ${index === 0 ? 'active' : ''}" onclick="showContent(${index})">
+                            <span class="content-number">${index + 1}</span>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 500; color: var(--text-primary); font-size: 0.9rem;">${content.title}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+                                    ${content.estimated_minutes} min
+                                </div>
+                            </div>
+                            ${content.is_completed ? '<span style="color: var(--success-color);">✓</span>' : ''}
+                        </li>
+                    `).join('')}
+                </ul>
+            </aside>
+            
+            <main class="immersive-content">
+                <div id="contentMain" class="fade-in">
+                    <!-- Content injects here -->
+                </div>
+            </main>
+        </div>
+    `;
 }
 
 function showContent(index) {
@@ -67,47 +85,107 @@ function showContent(index) {
     
     // Update sidebar
     document.querySelectorAll('.content-item').forEach((item, i) => {
-        item.classList.toggle('active', i === index);
+        if (i === index) {
+            item.classList.add('active');
+            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+            item.classList.remove('active');
+        }
     });
     
     // Render content
-    let contentHTML = `
-        <div class="content-detail">
-            <h2>${content.title}</h2>
-            <div class="content-type-badge">${content.content_type}</div>
+    const contentHTML = `
+        <div class="fade-in">
+            <header style="margin-bottom: 3rem; border-bottom: 1px solid var(--border-color); padding-bottom: 2rem;">
+                <div class="content-type-badge">${content.content_type}</div>
+                <h1>${content.title}</h1>
+            </header>
             
-            ${content.text_content ? `<div class="content-text">${content.text_content}</div>` : ''}
-            ${content.code_content ? `<pre><code>${content.code_content}</code></pre>` : ''}
-            ${content.video_url ? `<div class="video-container"><iframe src="${content.video_url}" allowfullscreen></iframe></div>` : ''}
-            ${content.external_url ? `<a href="${content.external_url}" target="_blank" class="btn btn-outline">Open External Resource</a>` : ''}
+            <article class="content-text">
+                ${content.text_content ? formatTextContent(content.text_content) : ''}
+                
+                ${content.code_content ? `
+                    <div style="margin: 2rem 0; background: #1e1e1e; padding: 1.5rem; border-radius: var(--radius-md); overflow-x: auto;">
+                        <pre><code style="font-family: 'Fira Code', monospace; color: #d4d4d4;">${content.code_content}</code></pre>
+                    </div>
+                ` : ''}
+                
+                ${content.video_url ? `
+                    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; border-radius: var(--radius-md); margin: 2rem 0;">
+                        <iframe src="${content.video_url}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" allowfullscreen></iframe>
+                    </div>
+                ` : ''}
+                
+                ${content.external_url ? `
+                    <div style="margin: 2rem 0; padding: 2rem; background: var(--bg-surface); border-radius: var(--radius-md); text-align: center;">
+                        <p>This content is hosted externally.</p>
+                        <a href="${content.external_url}" target="_blank" class="btn btn-primary">Open Resource ↗</a>
+                    </div>
+                ` : ''}
+            </article>
             
-            <div class="content-actions">
-                ${index > 0 ? `<button onclick="showContent(${index - 1})" class="btn btn-outline">← Previous</button>` : '<div></div>'}
-                <button onclick="markComplete(${content.id})" class="btn btn-primary">Mark Complete</button>
-                ${index < contents.length - 1 ? `<button onclick="showContent(${index + 1})" class="btn btn-primary">Next →</button>` : '<div></div>'}
-            </div>
+            <footer style="margin-top: 4rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 2rem;">
+                <div>
+                    ${index > 0 ? `
+                        <button onclick="showContent(${index - 1})" class="btn btn-outline">
+                            ← Previous
+                        </button>
+                    ` : ''}
+                </div>
+                
+                <div style="display: flex; gap: 1rem;">
+                    <button onclick="markComplete(${content.id})" class="btn btn-primary">
+                        ${index === contents.length - 1 ? 'Finish Module 🎉' : 'Complete & Next →'}
+                    </button>
+                </div>
+            </footer>
         </div>
     `;
     
     document.getElementById('contentMain').innerHTML = contentHTML;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function formatTextContent(text) {
+    // Simple formatter to wrap paragraphs if they aren't already HTML
+    if (!text) return '';
+    if (text.trim().startsWith('<')) return text;
+    
+    return text.split('\n\n').map(para => `<p>${para}</p>`).join('');
 }
 
 async function markComplete(contentId) {
     try {
         await apiCall(`/api/learning/contents/${contentId}/mark_complete/`, 'POST');
-        alert('Content marked as complete!');
         
-        // Move to next content if available
+        // Update completion status visually
+        contents[currentContentIndex].is_completed = true;
+        
+        // Move to next
         if (currentContentIndex < contents.length - 1) {
             showContent(currentContentIndex + 1);
+        } else {
+            // Finished module
+            const btn = document.querySelector('#contentMain .btn-primary');
+            btn.innerText = 'Completed ✓';
+            btn.disabled = true;
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
         }
     } catch (error) {
         console.error('Error marking complete:', error);
-        alert('Failed to mark complete. Please try again.');
+        // alert('Failed to save progress'); // Don't interrupt flow too much
     }
 }
+
+// Add confetti script for celebration
+const script = document.createElement('script');
+script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js';
+document.head.appendChild(script);
 
 document.addEventListener('DOMContentLoaded', loadModuleDetail);
 </script>
 {% endblock %}
-

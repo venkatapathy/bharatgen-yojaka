@@ -3,13 +3,14 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Count, Q
 from django.utils import timezone
-from .models import LearningPath, Module, Content, UserProgress, UserEnrollment
+from .models import LearningPath, Module, Content, UserProgress, UserEnrollment, Concept
 from .serializers import (
     LearningPathSerializer, LearningPathListSerializer,
     ModuleSerializer, ModuleListSerializer,
     ContentSerializer, UserProgressSerializer,
-    UserEnrollmentSerializer
+    UserEnrollmentSerializer, ConceptSerializer
 )
+from .quiz_generator import QuizGenerator
 
 
 class LearningPathViewSet(viewsets.ModelViewSet):
@@ -20,6 +21,9 @@ class LearningPathViewSet(viewsets.ModelViewSet):
     
     def get_serializer_class(self):
         if self.action == 'list':
+            # Use detailed serializer if filtering by slug to get full content
+            if self.request.query_params.get('slug'):
+                return LearningPathSerializer
             return LearningPathListSerializer
         return LearningPathSerializer
     
@@ -30,6 +34,11 @@ class LearningPathViewSet(viewsets.ModelViewSet):
         difficulty = self.request.query_params.get('difficulty')
         if difficulty:
             queryset = queryset.filter(difficulty_level=difficulty)
+        
+        # Filter by slug
+        slug = self.request.query_params.get('slug')
+        if slug:
+            queryset = queryset.filter(slug=slug)
         
         # Filter by tags
         tags = self.request.query_params.get('tags')
@@ -157,6 +166,51 @@ class ContentViewSet(viewsets.ReadOnlyModelViewSet):
         
         return queryset.order_by('module', 'order')
     
+    @action(detail=True, methods=['post'])
+    def generate_quiz(self, request, pk=None):
+        """Generate a dynamic quiz for this content."""
+        content = self.get_object()
+        
+        num_questions = int(request.data.get('num_questions', 5))
+        difficulty = request.data.get('difficulty', 'intermediate')
+        
+        generator = QuizGenerator()
+        quiz_data = generator.generate_quiz(
+            content_id=content.id,
+            num_questions=num_questions,
+            difficulty=difficulty
+        )
+        
+        if "error" in quiz_data:
+            return Response(quiz_data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+        return Response(quiz_data)
+
+    @action(detail=True, methods=['post'])
+    def submit_answer(self, request, pk=None):
+        """Submit an answer and get immersive feedback."""
+        content = self.get_object()
+        
+        question = request.data.get('question')
+        user_answer = request.data.get('user_answer')
+        correct_answer = request.data.get('correct_answer')
+        
+        if not all([question, user_answer, correct_answer]):
+            return Response(
+                {'error': 'Missing required fields'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        generator = QuizGenerator()
+        feedback = generator.evaluate_answer(
+            question=question,
+            user_answer=user_answer,
+            correct_answer=correct_answer,
+            context=content.text_content or ""
+        )
+        
+        return Response(feedback)
+
     @action(detail=True, methods=['post'])
     def mark_complete(self, request, pk=None):
         """Mark content as complete."""
@@ -310,4 +364,22 @@ class UserProgressViewSet(viewsets.ReadOnlyModelViewSet):
         return UserProgress.objects.filter(user=self.request.user).select_related(
             'learning_path', 'module', 'content'
         ).order_by('-last_accessed')
+
+
+class ConceptViewSet(viewsets.ReadOnlyModelViewSet):
+    """ViewSet for Concept model."""
+    
+    queryset = Concept.objects.all()
+    serializer_class = ConceptSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Filter by module
+        module_id = self.request.query_params.get('module')
+        if module_id:
+            queryset = queryset.filter(module_id=module_id)
+            
+        return queryset
 

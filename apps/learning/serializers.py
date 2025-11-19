@@ -1,6 +1,15 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import LearningPath, Module, Content, UserProgress, UserEnrollment
+from .models import LearningPath, Module, Content, UserProgress, UserEnrollment, Concept
+
+
+class ConceptSerializer(serializers.ModelSerializer):
+    """Serializer for Concept model."""
+    
+    class Meta:
+        model = Concept
+        fields = ['id', 'title', 'description', 'module', 'related_concepts', 'prerequisites']
+        depth = 1
 
 
 class ContentSerializer(serializers.ModelSerializer):
@@ -13,6 +22,7 @@ class ContentSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'content_type', 'order', 'text_content',
             'code_content', 'video_url', 'external_url', 'questions',
+            'slides_content',
             'estimated_minutes', 'difficulty', 'user_progress'
         ]
     
@@ -20,19 +30,18 @@ class ContentSerializer(serializers.ModelSerializer):
         """Get user progress for this content."""
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            try:
-                progress = UserProgress.objects.get(
-                    user=request.user,
-                    content=obj
-                )
+            progress = UserProgress.objects.filter(
+                user=request.user,
+                content=obj
+            ).first()
+            
+            if progress:
                 return {
                     'status': progress.status,
                     'progress_percentage': progress.progress_percentage,
                     'time_spent_minutes': progress.time_spent_minutes,
                     'score': progress.score
                 }
-            except UserProgress.DoesNotExist:
-                return None
         return None
 
 
@@ -58,18 +67,17 @@ class ModuleSerializer(serializers.ModelSerializer):
         """Get user progress for this module."""
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            try:
-                progress = UserProgress.objects.get(
-                    user=request.user,
-                    module=obj
-                )
+            progress = UserProgress.objects.filter(
+                user=request.user,
+                module=obj
+            ).first()
+            
+            if progress:
                 return {
                     'status': progress.status,
                     'progress_percentage': progress.progress_percentage,
                     'time_spent_minutes': progress.time_spent_minutes
                 }
-            except UserProgress.DoesNotExist:
-                return None
         return None
 
 
@@ -119,13 +127,14 @@ class LearningPathSerializer(serializers.ModelSerializer):
         """Get overall user progress for this path."""
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            try:
-                progress = UserProgress.objects.get(
-                    user=request.user,
-                    learning_path=obj,
-                    module__isnull=True,
-                    content__isnull=True
-                )
+            progress = UserProgress.objects.filter(
+                user=request.user,
+                learning_path=obj,
+                module__isnull=True,
+                content__isnull=True
+            ).first()
+            
+            if progress:
                 return {
                     'status': progress.status,
                     'progress_percentage': progress.progress_percentage,
@@ -133,8 +142,6 @@ class LearningPathSerializer(serializers.ModelSerializer):
                     'started_at': progress.started_at,
                     'last_accessed': progress.last_accessed
                 }
-            except UserProgress.DoesNotExist:
-                return None
         return None
 
 

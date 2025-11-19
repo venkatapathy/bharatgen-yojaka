@@ -67,6 +67,29 @@ class Module(models.Model):
         return f"{self.learning_path.title} - {self.title}"
 
 
+class Concept(models.Model):
+    """Key concepts and mental models."""
+    
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    module = models.ForeignKey(Module, on_delete=models.CASCADE, related_name='concepts', null=True, blank=True)
+    
+    # Relationships
+    related_concepts = models.ManyToManyField('self', blank=True, symmetrical=True)
+    prerequisites = models.ManyToManyField('self', blank=True, symmetrical=False, related_name='required_for')
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'concepts'
+        ordering = ['title']
+        
+    def __str__(self):
+        return self.title
+
+
 class Content(models.Model):
     """Individual learning content items."""
     
@@ -92,6 +115,9 @@ class Content(models.Model):
     
     # Quiz/Exercise data
     questions = models.JSONField(default=dict, blank=True, help_text="Quiz questions and answers")
+    
+    # Slides data
+    slides_content = models.JSONField(default=dict, blank=True, help_text="Structured content for slides")
     
     # Metadata
     estimated_minutes = models.IntegerField(default=5)
