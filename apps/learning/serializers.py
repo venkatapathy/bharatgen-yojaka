@@ -20,9 +20,12 @@ class ContentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Content
         fields = [
-            'id', 'title', 'content_type', 'order', 'text_content',
-            'code_content', 'video_url', 'external_url', 'questions',
-            'slides_content',
+            'id', 'title', 'content_type', 'order', 
+            'text_content',
+            'video_url', 'video_summary',
+            'mental_model_title', 'mental_model_description', 'mental_model_image',
+            'code_content', 'external_url', 
+            'questions', 'slides_content', 'metadata',
             'estimated_minutes', 'difficulty', 'user_progress'
         ]
     

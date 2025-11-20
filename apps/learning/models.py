@@ -96,6 +96,7 @@ class Content(models.Model):
     CONTENT_TYPES = [
         ('text', 'Text/Article'),
         ('video', 'Video'),
+        ('mental_model', 'Mental Model'),
         ('code', 'Code Exercise'),
         ('quiz', 'Quiz'),
         ('project', 'Project'),
@@ -107,10 +108,20 @@ class Content(models.Model):
     content_type = models.CharField(max_length=20, choices=CONTENT_TYPES)
     order = models.IntegerField(default=0)
     
-    # Content
-    text_content = models.TextField(blank=True, null=True)
+    # Content Fields
+    text_content = models.TextField(blank=True, null=True, help_text="Main textual explanation")
+    
+    # Video Section
+    video_url = models.URLField(blank=True, null=True, help_text="YouTube or video URL")
+    video_summary = models.TextField(blank=True, null=True, help_text="Summary of the video content")
+    
+    # Mental Model Section
+    mental_model_title = models.CharField(max_length=200, blank=True, null=True)
+    mental_model_description = models.TextField(blank=True, null=True)
+    mental_model_image = models.URLField(blank=True, null=True, help_text="URL for mental model diagram")
+    
+    # Practice/Code Section
     code_content = models.TextField(blank=True, null=True)
-    video_url = models.URLField(blank=True, null=True)
     external_url = models.URLField(blank=True, null=True)
     
     # Quiz/Exercise data
@@ -118,6 +129,9 @@ class Content(models.Model):
     
     # Slides data
     slides_content = models.JSONField(default=dict, blank=True, help_text="Structured content for slides")
+    
+    # Generic metadata (kept for flexibility)
+    metadata = models.JSONField(default=dict, blank=True, help_text="Additional metadata")
     
     # Metadata
     estimated_minutes = models.IntegerField(default=5)
