@@ -66,7 +66,7 @@ class ContentAdmin(admin.ModelAdmin):
             'fields': ('module', 'title', 'content_type', 'order')
         }),
         ('Content', {
-            'fields': ('text_content', 'code_content', 'video_url', 'external_url', 'questions')
+            'fields': ('text_content', 'code_content', 'video_url', 'external_url', 'questions', 'slides_content', 'metadata')
         }),
         ('Metadata', {
             'fields': ('estimated_minutes', 'difficulty')
