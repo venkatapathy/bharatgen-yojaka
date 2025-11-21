@@ -67,8 +67,8 @@ ollama --version
 ### Step 3: Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/bharatgen-acharya.git
-cd bharatgen-acharya
+git clone https://github.com/yourusername/bharatgen-yojaka.git
+cd bharatgen-yojaka
 ```
 
 ### Step 4: Run Automated Setup

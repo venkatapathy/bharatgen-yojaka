@@ -32,8 +32,8 @@ An intelligent learning platform powered by Django, RAG (Retrieval-Augmented Gen
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/bharatgen-acharya.git
-cd bharatgen-acharya
+git clone https://github.com/yourusername/bharatgen-yojaka.git
+cd bharatgen-yojaka
 ```
 
 ### 2. Set Up Python Environment
@@ -151,7 +151,7 @@ Visit:
 ## 📁 Project Structure
 
 ```
-bharatgen-acharya/
+bharatgen-yojaka/
 ├── apps/
 │   ├── core/           # User auth, profiles, analytics
 │   ├── learning/       # Learning paths, modules, content

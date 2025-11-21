@@ -68,7 +68,7 @@ class Module(models.Model):
 
 
 class Concept(models.Model):
-    """Key concepts and mental models."""
+    """Key concepts and concept graphs."""
     
     title = models.CharField(max_length=200)
     description = models.TextField()
@@ -96,7 +96,7 @@ class Content(models.Model):
     CONTENT_TYPES = [
         ('text', 'Text/Article'),
         ('video', 'Video'),
-        ('mental_model', 'Mental Model'),
+        ('concept_graph', 'Concept Graph'),
         ('code', 'Code Exercise'),
         ('quiz', 'Quiz'),
         ('project', 'Project'),
@@ -115,10 +115,10 @@ class Content(models.Model):
     video_url = models.URLField(blank=True, null=True, help_text="YouTube or video URL")
     video_summary = models.TextField(blank=True, null=True, help_text="Summary of the video content")
     
-    # Mental Model Section
-    mental_model_title = models.CharField(max_length=200, blank=True, null=True)
-    mental_model_description = models.TextField(blank=True, null=True)
-    mental_model_image = models.URLField(blank=True, null=True, help_text="URL for mental model diagram")
+    # Concept Graph Section
+    concept_graph_title = models.CharField(max_length=200, blank=True, null=True)
+    concept_graph_description = models.TextField(blank=True, null=True)
+    concept_graph_image = models.URLField(blank=True, null=True, help_text="URL for concept graph diagram")
     
     # Practice/Code Section
     code_content = models.TextField(blank=True, null=True)

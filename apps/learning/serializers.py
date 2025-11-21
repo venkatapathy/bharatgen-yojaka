@@ -23,7 +23,7 @@ class ContentSerializer(serializers.ModelSerializer):
             'id', 'title', 'content_type', 'order', 
             'text_content',
             'video_url', 'video_summary',
-            'mental_model_title', 'mental_model_description', 'mental_model_image',
+            'concept_graph_title', 'concept_graph_description', 'concept_graph_image',
             'code_content', 'external_url', 
             'questions', 'slides_content', 'metadata',
             'estimated_minutes', 'difficulty', 'user_progress'

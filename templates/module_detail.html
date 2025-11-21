@@ -201,7 +201,7 @@ function showContent(index) {
     const tabs = [
         { id: 'explanation', label: 'Explanation', icon: '📖', hasContent: !!content.text_content },
         { id: 'video', label: 'Video', icon: '📺', hasContent: !!content.video_url },
-        { id: 'mental-model', label: 'Mental Model', icon: '🧠', hasContent: !!content.mental_model_title },
+        { id: 'concept-graph', label: 'Concept Graph', icon: '🧠', hasContent: !!content.concept_graph_title },
         { id: 'practice', label: 'Practice', icon: '💻', hasContent: !!content.code_content || !!content.questions }
     ].filter(t => t.hasContent);
 
@@ -258,22 +258,22 @@ function showContent(index) {
                     ` : ''}
                 </div>
 
-                <!-- 3. Mental Model Section -->
-                <div id="tab-mental-model" class="tab-pane ${activeTabId === 'mental-model' ? 'active' : ''}">
-                    ${content.mental_model_title ? `
-                        <div class="mental-model-container" style="background: linear-gradient(145deg, var(--bg-surface), var(--bg-surface-hover)); border: 1px solid var(--border-color); padding: 3rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">
+                <!-- 3. Concept Graph Section -->
+                <div id="tab-concept-graph" class="tab-pane ${activeTabId === 'concept-graph' ? 'active' : ''}">
+                    ${content.concept_graph_title ? `
+                        <div class="concept-graph-container" style="background: linear-gradient(145deg, var(--bg-surface), var(--bg-surface-hover)); border: 1px solid var(--border-color); padding: 3rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">
                             <div style="text-align: center; margin-bottom: 3rem;">
                                 <div style="background: var(--primary-color); color: white; width: 64px; height: 64px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 2rem; margin-bottom: 1rem; box-shadow: var(--shadow-md);">🧠</div>
-                                <h2 style="margin: 0; font-size: 2rem; color: var(--text-primary);">${content.mental_model_title}</h2>
+                                <h2 style="margin: 0; font-size: 2rem; color: var(--text-primary);">${content.concept_graph_title}</h2>
                             </div>
                             
-                            <div style="display: grid; grid-template-columns: ${content.mental_model_image ? '1fr 1fr' : '1fr'}; gap: 4rem; align-items: center;">
+                            <div style="display: grid; grid-template-columns: ${content.concept_graph_image ? '1fr 1fr' : '1fr'}; gap: 4rem; align-items: center;">
                                 <div class="model-explanation" style="font-size: 1.125rem; line-height: 1.8;">
-                                    ${content.mental_model_description ? marked.parse(content.mental_model_description) : ''}
+                                    ${content.concept_graph_description ? marked.parse(content.concept_graph_description) : ''}
                                 </div>
-                                ${content.mental_model_image ? `
+                                ${content.concept_graph_image ? `
                                     <figure style="margin: 0; transition: transform 0.3s ease;">
-                                        <img src="${content.mental_model_image}" alt="${content.mental_model_title}" style="width: 100%; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: white; padding: 1rem; box-shadow: var(--shadow-lg);">
+                                        <img src="${content.concept_graph_image}" alt="${content.concept_graph_title}" style="width: 100%; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: white; padding: 1rem; box-shadow: var(--shadow-lg);">
                                     </figure>
                                 ` : ''}
                             </div>
