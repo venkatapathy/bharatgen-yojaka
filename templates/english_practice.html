@@ -1,0 +1,415 @@
+{% extends "base.html" %}
+
+{% block title %}English Practice - BharatGen Yojaka{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header-section">
+        <h1 id="contentTitle">Loading...</h1>
+        <div class="controls">
+             <select id="llmProvider" class="form-select" style="margin-right: 1rem;">
+                <option value="gemini">Gemini (Google)</option>
+                <option value="ollama">System LLM (Ollama)</option>
+            </select>
+            <a href="/learning-paths/" class="btn btn-outline">Back to Courses</a>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button id="tab-reading" class="tab-btn active" onclick="switchTab('reading')">Reading & Questions</button>
+        <button id="tab-speaking" class="tab-btn" onclick="switchTab('speaking')">Speaking Practice</button>
+    </div>
+
+    <div id="reading-tab-content" class="tab-content-pane">
+        <div class="grid">
+            <div class="card" style="grid-column: span 2;">
+                <div id="readingMaterial" class="reading-content">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>Practice Questions</h3>
+                <div id="questionsList" class="questions-container">
+                    <!-- Questions will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="speaking-tab-content" class="tab-content-pane" style="display: none;">
+        <div class="grid">
+             <div class="card" style="grid-column: span 2;">
+                <h3>Reference Text</h3>
+                <div id="speakingReferenceText" class="reading-content">
+                   <!-- Copy of content -->
+                </div>
+             </div>
+             <div class="card">
+                <h3>Record Response</h3>
+                <div class="text-center" style="padding: 2rem; text-align: center;">
+                    <div id="recordingControls">
+                        <button id="startRecordBtn" class="record-btn btn-record" onclick="startRecording()">🎤</button>
+                        <button id="stopRecordBtn" class="record-btn btn-stop" onclick="stopRecording()" style="display: none;">⏹</button>
+                    </div>
+                    <div id="recordingStatus" style="margin-top: 1rem; color: #666;">Click mic to start recording</div>
+                    <audio id="audioPlayback" controls style="width: 100%; margin-top: 1rem; display: none;"></audio>
+                    
+                    <button id="submitSpeakingBtn" onclick="submitSpeaking()" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;" disabled>Submit for Feedback</button>
+                </div>
+                
+                <div id="speakingFeedback" class="feedback-box" style="margin-top: 1rem;"></div>
+             </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .reading-content {
+        font-family: 'Merriweather', serif;
+        line-height: 1.8;
+        font-size: 1.1rem;
+        white-space: pre-wrap;
+    }
+    .question-item {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #eee;
+    }
+    .feedback-box {
+        margin-top: 1rem;
+        padding: 1rem;
+        border-radius: 8px;
+        background-color: #f8f9fa;
+        display: none;
+    }
+    .feedback-box.correct {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+    }
+    .feedback-box.incorrect {
+        background-color: #fff3cd;
+        border: 1px solid #ffeeba;
+        color: #856404;
+    }
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    .controls {
+        display: flex;
+        align-items: center;
+    }
+    .form-select {
+        padding: 0.5rem;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+    }
+    /* Tab Styles */
+    .tabs {
+        display: flex;
+        border-bottom: 1px solid #ddd;
+        margin-bottom: 1.5rem;
+    }
+    .tab-btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        background: none;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 500;
+        color: #666;
+        border-bottom: 2px solid transparent;
+    }
+    .tab-btn.active {
+        color: #007bff;
+        border-bottom-color: #007bff;
+    }
+    .tab-btn:hover {
+        color: #007bff;
+    }
+    /* Recording Styles */
+    .record-btn {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin: 0 auto;
+        transition: all 0.2s;
+    }
+    .btn-record {
+        background-color: #dc3545;
+        color: white;
+    }
+    .btn-stop {
+        background-color: #6c757d;
+        color: white;
+    }
+    .recording-pulse {
+        animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const contentId = window.location.pathname.split('/').filter(Boolean).pop();
+    let contentData = null;
+
+    async function loadContent() {
+        try {
+            const result = await apiRequest(`/api/learning/contents/${contentId}/`);
+            if (!result.ok) throw new Error('Failed to load content');
+            
+            contentData = result.data;
+            renderContent();
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('readingMaterial').innerHTML = '<p class="error">Error loading content.</p>';
+        }
+    }
+
+    function renderContent() {
+        document.getElementById('contentTitle').textContent = contentData.title;
+        document.getElementById('readingMaterial').textContent = contentData.text_content;
+        
+        // Populate speaking tab content
+        const speakingRef = document.getElementById('speakingReferenceText');
+        if (speakingRef) speakingRef.textContent = contentData.text_content;
+        
+        const questionsContainer = document.getElementById('questionsList');
+        questionsContainer.innerHTML = '';
+
+        if (contentData.questions && contentData.questions.items) {
+            contentData.questions.items.forEach((q, index) => {
+                const qDiv = document.createElement('div');
+                qDiv.className = 'question-item';
+                qDiv.innerHTML = `
+                    <h4>Question ${index + 1}</h4>
+                    <p>${q.question}</p>
+                    <div class="form-group">
+                        <textarea id="answer-${q.id}" class="form-control" rows="3" placeholder="Type your answer here..."></textarea>
+                    </div>
+                    <button onclick="submitAnswer(${q.id})" class="btn btn-primary" id="btn-${q.id}">Submit Answer</button>
+                    <div id="feedback-${q.id}" class="feedback-box"></div>
+                `;
+                questionsContainer.appendChild(qDiv);
+            });
+        } else {
+            questionsContainer.innerHTML = '<p>No practice questions available for this content.</p>';
+        }
+    }
+
+    async function submitAnswer(questionId) {
+        const questionItem = contentData.questions.items.find(q => q.id === questionId);
+        if (!questionItem) return;
+
+        const answerInput = document.getElementById(`answer-${questionId}`);
+        const btn = document.getElementById(`btn-${questionId}`);
+        const feedbackBox = document.getElementById(`feedback-${questionId}`);
+        const provider = document.getElementById('llmProvider').value;
+        
+        const userAnswer = answerInput.value.trim();
+        if (!userAnswer) {
+            alert('Please enter an answer');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Evaluating...';
+        feedbackBox.style.display = 'none';
+
+        try {
+            const result = await apiRequest(`/api/learning/contents/${contentId}/submit_answer/`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    question: questionItem.question,
+                    user_answer: userAnswer,
+                    correct_answer: questionItem.reference_answer,
+                    evaluation_mode: 'descriptive',
+                    provider: provider
+                })
+            });
+
+            if (!result.ok) throw new Error(result.error || 'Failed to submit answer');
+            const data = result.data;
+            
+            feedbackBox.className = `feedback-box ${data.is_correct ? 'correct' : 'incorrect'}`;
+            feedbackBox.innerHTML = `
+                <strong>${data.is_correct ? 'Correct!' : 'Feedback:'}</strong>
+                <p>${data.feedback}</p>
+                ${data.level_of_correctness ? `<small>Assessment: ${data.level_of_correctness}</small>` : ''}
+                <div style="margin-top:0.5rem; font-size:0.8em; color:#666;">Evaluated by: ${provider === 'gemini' ? 'Gemini' : 'System LLM'}</div>
+            `;
+            feedbackBox.style.display = 'block';
+
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to submit answer: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Submit Answer';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadContent);
+    
+    // Tab functionality
+    function switchTab(tabName) {
+        // Update buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        const activeBtn = document.getElementById(`tab-${tabName}`);
+        if (activeBtn) activeBtn.classList.add('active');
+        
+        // Update content
+        document.getElementById('reading-tab-content').style.display = tabName === 'reading' ? 'block' : 'none';
+        document.getElementById('speaking-tab-content').style.display = tabName === 'speaking' ? 'block' : 'none';
+    }
+    
+    // Audio Recording
+    let mediaRecorder;
+    let audioChunks = [];
+    let audioBlob;
+
+    async function startRecording() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            let errorMsg = "Audio recording is not supported in this browser or context.";
+            if (!window.isSecureContext) {
+                errorMsg += "\n\nNote: Most browsers require HTTPS (or localhost) to access the microphone. If you are using an IP address (like 192.168.x.x), try using 'localhost' or setup HTTPS.";
+            }
+            alert(errorMsg);
+            return;
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audio = document.getElementById('audioPlayback');
+                audio.src = audioUrl;
+                audio.style.display = 'block';
+                document.getElementById('submitSpeakingBtn').disabled = false;
+            };
+
+            mediaRecorder.start();
+            document.getElementById('startRecordBtn').style.display = 'none';
+            document.getElementById('stopRecordBtn').style.display = 'flex';
+            document.getElementById('recordingStatus').textContent = 'Recording...';
+            document.getElementById('stopRecordBtn').classList.add('recording-pulse');
+        } catch (err) {
+            console.error("Error accessing microphone:", err);
+            
+            let msg = "Could not access microphone.\n";
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                msg += "Permission was denied. Please check your browser settings (click the lock icon in the address bar).";
+            } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                msg += "No microphone found.";
+            } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                msg += "Microphone is busy or not readable. Check if another app is using it.";
+            } else if (err.name === 'SecurityError' || !window.isSecureContext) {
+                 msg += "Security restriction. Browser likely requires HTTPS.";
+            } else {
+                msg += "Details: " + (err.message || err.name);
+            }
+            alert(msg);
+        }
+    }
+
+    function stopRecording() {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            
+            document.getElementById('startRecordBtn').style.display = 'flex';
+            document.getElementById('stopRecordBtn').style.display = 'none';
+            document.getElementById('stopRecordBtn').classList.remove('recording-pulse');
+            document.getElementById('recordingStatus').textContent = 'Recording finished. Listen below or re-record.';
+        }
+    }
+
+    async function submitSpeaking() {
+        if (!audioBlob) return;
+        
+        const btn = document.getElementById('submitSpeakingBtn');
+        const feedbackBox = document.getElementById('speakingFeedback');
+        
+        btn.disabled = true;
+        btn.textContent = 'Analyzing Audio...';
+        feedbackBox.style.display = 'none';
+        
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.wav');
+        
+        try {
+            // Use raw fetch to handle FormData correctly
+            const token = getAuthToken();
+            const headers = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
+            const response = await fetch(`/api/learning/contents/${contentId}/submit_speaking/`, {
+                method: 'POST',
+                headers: headers,
+                body: formData
+            });
+            
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || 'Failed to submit audio');
+            }
+            
+            const data = await response.json();
+            
+            feedbackBox.className = 'feedback-box';
+            // Simple styling based on grade
+            let gradeClass = '';
+            const grade = parseFloat(data.grade);
+            if (grade >= 80) gradeClass = 'correct';
+            else if (grade >= 60) gradeClass = 'incorrect'; // warning/partial
+            
+            if (gradeClass) feedbackBox.classList.add(gradeClass);
+            else feedbackBox.style.backgroundColor = '#f8f9fa';
+            
+            feedbackBox.innerHTML = `
+                <h4>Assessment Result</h4>
+                <div style="font-size: 1.2rem; margin-bottom: 1rem;">
+                    <strong>Grade: ${data.grade}/100</strong>
+                </div>
+                <strong>Feedback:</strong>
+                <p>${data.feedback ? data.feedback.replace(/\n/g, '<br>') : ''}</p>
+                <div style="margin-top:0.5rem; font-size:0.8em; color:#666;">Evaluated by: Gemini</div>
+            `;
+            feedbackBox.style.display = 'block';
+            
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to submit audio: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Submit for Feedback';
+        }
+    }
+</script>
+{% endblock %}

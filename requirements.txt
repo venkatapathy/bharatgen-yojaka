@@ -15,6 +15,7 @@ chromadb==0.4.24
 pysqlite3-binary==0.5.2.post2
 sentence-transformers==2.7.0
 ollama==0.1.9
+google-generativeai
 
 # Vector store and embeddings (updated versions)
 numpy==1.26.4

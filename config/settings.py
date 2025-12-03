@@ -157,6 +157,9 @@ RAG_CONFIG = {
     'TOP_K': config('TOP_K', default=5, cast=int),
 }
 
+# Gemini Configuration
+GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
+
 # Content Configuration
 CONTENT_DIR = config('CONTENT_DIR', default=str(BASE_DIR / 'data' / 'learning_content'))
 

@@ -11,6 +11,9 @@ from .serializers import (
     UserEnrollmentSerializer, ConceptSerializer
 )
 from .quiz_generator import QuizGenerator
+from apps.rag.providers.gemini_provider import GeminiProvider
+import tempfile
+import os
 
 
 class LearningPathViewSet(viewsets.ModelViewSet):
@@ -194,6 +197,8 @@ class ContentViewSet(viewsets.ReadOnlyModelViewSet):
         question = request.data.get('question')
         user_answer = request.data.get('user_answer')
         correct_answer = request.data.get('correct_answer')
+        evaluation_mode = request.data.get('evaluation_mode', 'standard')
+        provider = request.data.get('provider', 'ollama') # Default to Ollama if not specified
         
         if not all([question, user_answer, correct_answer]):
             return Response(
@@ -206,10 +211,65 @@ class ContentViewSet(viewsets.ReadOnlyModelViewSet):
             question=question,
             user_answer=user_answer,
             correct_answer=correct_answer,
-            context=content.text_content or ""
+            context=content.text_content or "",
+            evaluation_mode=evaluation_mode,
+            provider=provider
         )
         
         return Response(feedback)
+
+    @action(detail=True, methods=['post'])
+    def submit_speaking(self, request, pk=None):
+        """Submit speaking audio for evaluation."""
+        content = self.get_object()
+        
+        audio_file = request.FILES.get('audio')
+        if not audio_file:
+             return Response(
+                {'error': 'No audio file provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        # Save to temp file
+        suffix = os.path.splitext(audio_file.name)[1] or '.wav'
+        # Ensure suffix is safe
+        if suffix.lower() not in ['.wav', '.mp3', '.ogg', '.m4a', '.webm']:
+            suffix = '.wav'
+            
+        # Create a temp file
+        # We close it so that we can pass the path to other functions
+        # We set delete=False so it persists until we manually unlink
+        temp_fd, temp_audio_path = tempfile.mkstemp(suffix=suffix)
+        
+        try:
+            with os.fdopen(temp_fd, 'wb') as temp_audio:
+                for chunk in audio_file.chunks():
+                    temp_audio.write(chunk)
+            
+            # Initialize provider - prefer Gemini if available, else fail gracefully or use local
+            try:
+                provider = GeminiProvider()
+                # Use content text as reference
+                reference_text = content.text_content or content.title
+                result = provider.evaluate_speaking_audio(temp_audio_path, reference_text)
+                return Response(result)
+            except ValueError as e:
+                # If Gemini key is missing, we can add fallback logic here if desired
+                # For now, just returning a clearer error or mock response if needed
+                return Response(
+                    {'error': f"Gemini API not configured: {str(e)}. Please set GEMINI_API_KEY."},
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE
+                )
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        finally:
+            # Clean up temp file
+            if os.path.exists(temp_audio_path):
+                os.unlink(temp_audio_path)
 
     @action(detail=True, methods=['post'])
     def mark_complete(self, request, pk=None):
