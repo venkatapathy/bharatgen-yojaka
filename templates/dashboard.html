@@ -2,41 +2,432 @@
 
 {% block title %}Dashboard - BharatGen Acharya{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* --- DASHBOARD THEME STYLES --- */
+    .dashboard {
+        padding-top: 1rem;
+    }
+
+    .page-header h1 {
+        font-family: 'Merriweather', serif;
+        font-size: 2.2rem;
+        color: var(--brand-primary);
+        margin-bottom: 0.5rem;
+        animation: fadeInDown 0.8s ease;
+    }
+    
+    .page-header p {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        animation: fadeInDown 0.8s ease 0.2s backwards;
+    }
+
+    .section {
+        margin-bottom: 3rem;
+    }
+
+    .section h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        color: var(--text-primary);
+        position: relative;
+        display: inline-block;
+        animation: fadeInUp 0.8s ease;
+    }
+    
+    .section h2::after {
+        content: '';
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 40px;
+        height: 3px;
+        background: var(--brand-primary);
+        border-radius: 2px;
+    }
+
+    /* --- ANIMATION UTILITIES --- */
+    @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulseGlow { 0% { box-shadow: 0 0 0 0 rgba(255, 69, 0, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(255, 69, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 69, 0, 0); } }
+
+    .stagger-in {
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.6s ease forwards;
+    }
+
+    /* --- THEME CARD COMPONENT --- */
+    .themed-card {
+        background: linear-gradient(180deg, var(--bg-gradient-start), var(--bg-gradient-end));
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        box-shadow: var(--shadow-float);
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+    
+    .themed-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+    }
+
+    /* --- STATS GRID --- */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .stat-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px; /* Rounded square instead of circle for modern look */
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        transition: transform 0.3s ease;
+    }
+
+    .themed-card:hover .stat-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+    
+    .stat-icon svg {
+        width: 28px;
+        height: 28px;
+        stroke: var(--brand-primary);
+        stroke-width: 2;
+    }
+
+    /* Fire Effect for Streak */
+    .stat-icon.streak-fire {
+        background: #fff5f0;
+        animation: pulseGlow 2s infinite;
+    }
+    .stat-icon.streak-fire svg {
+        stroke: #ff4500; /* Orange-Red */
+    }
+
+    .stat-info h3 {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        line-height: 1.2;
+        margin: 0;
+    }
+
+    .stat-info p {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin-top: 0.25rem;
+        margin-bottom: 0;
+    }
+
+    /* --- WEEKLY ACTIVITY CHART (New Feature) --- */
+    .chart-container {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+        height: 60px;
+        margin-top: 10px;
+    }
+    .chart-bar {
+        flex: 1;
+        background: var(--brand-primary);
+        border-radius: 4px 4px 0 0;
+        opacity: 0.2;
+        transition: height 1s ease, opacity 0.3s;
+        position: relative;
+    }
+    .chart-bar:hover {
+        opacity: 0.8;
+        transform: scaleY(1.1);
+        transform-origin: bottom;
+    }
+    .chart-bar.active {
+        opacity: 1;
+        background: var(--accent-green);
+    }
+
+    /* --- PATHS & RECOMMENDATIONS --- */
+    .path-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .path-card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        border-left: 4px solid transparent;
+        transition: border-color 0.3s ease;
+    }
+    .path-card:hover { border-left-color: var(--brand-primary); }
+
+    .path-card h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        color: var(--brand-primary);
+    }
+
+    .path-card p {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        line-height: 1.5;
+        flex-grow: 1;
+        margin-bottom: 1rem;
+    }
+
+    .recommendation-badge {
+        align-self: flex-start;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--brand-primary);
+        background: rgba(0, 0, 128, 0.1);
+        padding: 0.25rem 0.75rem;
+        border-radius: 99px;
+        margin-bottom: 1rem;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 10px;
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 99px;
+        overflow: hidden;
+        margin: 0.75rem 0;
+        position: relative;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: var(--accent-green);
+        border-radius: 99px;
+        width: 0; /* Start at 0 for animation */
+        transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    /* Shimmer effect on progress bar */
+    .progress-fill::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; bottom: 0; right: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        transform: translateX(-100%);
+        animation: shimmer 2s infinite;
+    }
+    @keyframes shimmer { 100% { transform: translateX(100%); } }
+
+    /* --- BUTTONS --- */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.6rem 1.2rem;
+        border-radius: 99px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+        border: 1px solid transparent;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn::before {
+        content: '';
+        position: absolute;
+        top: 50%; left: 50%;
+        width: 0; height: 0;
+        background: rgba(255,255,255,0.2);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+    .btn:active::before { width: 300px; height: 300px; }
+
+    .btn-primary {
+        background: var(--brand-primary);
+        color: white;
+        box-shadow: 0 4px 6px rgba(0,0,128, 0.2);
+    }
+
+    .btn-primary:hover {
+        background: #000050;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,128, 0.3);
+    }
+
+    .btn-outline {
+        background: transparent;
+        border-color: rgba(0,0,0,0.2);
+        color: var(--text-primary);
+    }
+
+    .btn-outline:hover {
+        border-color: var(--brand-primary);
+        color: var(--brand-primary);
+        background: rgba(255,255,255,0.5);
+    }
+
+    /* --- ACHIEVEMENTS --- */
+    .achievements-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .achievement-card {
+        text-align: center;
+        cursor: pointer; /* Clickable for effect */
+        user-select: none;
+    }
+
+    .achievement-icon {
+        width: 70px;
+        height: 70px;
+        margin: 0 auto 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 215, 0, 0.1);
+        border-radius: 50%;
+        font-size: 2rem;
+        border: 2px solid rgba(255, 215, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .achievement-card:hover .achievement-icon {
+        transform: scale(1.1) rotate(10deg);
+        background: rgba(255, 215, 0, 0.2);
+        border-color: #FFD700;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+    }
+    
+    .achievement-icon svg {
+        width: 32px;
+        height: 32px;
+        fill: #DAA520;
+        stroke: #B8860B;
+        stroke-width: 1;
+    }
+
+    /* --- TOAST NOTIFICATIONS --- */
+    .toast-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .toast {
+        background: white;
+        border-left: 4px solid var(--brand-primary);
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transform: translateX(120%);
+        transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    .toast.show { transform: translateX(0); }
+    .toast.success { border-left-color: var(--accent-green); }
+    .toast-icon { width: 20px; height: 20px; }
+    
+    /* --- CONFETTI --- */
+    .confetti {
+        position: fixed;
+        width: 10px;
+        height: 10px;
+        background-color: #f00;
+        animation: confetti-fall linear forwards;
+        z-index: 2000;
+        pointer-events: none;
+    }
+    @keyframes confetti-fall { to { transform: translateY(100vh) rotate(720deg); } }
+
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container dashboard">
     <div class="page-header">
-        <h1>Welcome back, <span id="userFirstName">Learner</span>!</h1>
+        <h1 id="greetingText">Welcome back, <span id="userFirstName">Learner</span>!</h1>
         <p>Continue your AI learning journey</p>
     </div>
 
     <!-- Stats Overview -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon">📚</div>
+    <div class="stats-grid" id="statsGrid">
+        <!-- Enrolled Paths -->
+        <div class="stat-card themed-card stagger-in" style="animation-delay: 0.1s;">
+            <div class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            </div>
             <div class="stat-info">
-                <h3 id="enrolledPaths">0</h3>
+                <h3 class="counter" data-target="0">0</h3>
                 <p>Enrolled Paths</p>
             </div>
         </div>
-        <div class="stat-card">
-            <div class="stat-icon">✅</div>
+
+        <!-- Completed -->
+        <div class="stat-card themed-card stagger-in" style="animation-delay: 0.2s;">
+            <div class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            </div>
             <div class="stat-info">
-                <h3 id="completedPaths">0</h3>
+                <h3 class="counter" data-target="0">0</h3>
                 <p>Completed</p>
             </div>
         </div>
-        <div class="stat-card">
-            <div class="stat-icon">🔥</div>
+
+        <!-- Streak -->
+        <div class="stat-card themed-card stagger-in" style="animation-delay: 0.3s;">
+            <div class="stat-icon streak-fire">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+            </div>
             <div class="stat-info">
-                <h3 id="currentStreak">0</h3>
+                <h3 class="counter" data-target="0">0</h3>
                 <p>Day Streak</p>
             </div>
         </div>
-        <div class="stat-card">
-            <div class="stat-icon">⏰</div>
-            <div class="stat-info">
-                <h3 id="totalTime">0</h3>
+
+        <!-- Hours Learned (With Chart) -->
+        <div class="stat-card themed-card stagger-in" style="animation-delay: 0.4s;">
+            <div class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            </div>
+            <div class="stat-info" style="flex: 1;">
+                <h3 class="counter" data-target="0" id="totalHoursDisplay">0</h3>
                 <p>Hours Learned</p>
+                <!-- Mini Visual Chart -->
+                <div class="chart-container" id="activityChart">
+                    <!-- JS will inject bars here -->
+                </div>
             </div>
         </div>
     </div>
@@ -45,7 +436,7 @@
     <section class="section">
         <h2>Continue Learning</h2>
         <div id="inProgressPaths" class="path-grid">
-            <div class="loading">Loading your learning paths...</div>
+            <div class="themed-card loading">Loading your learning paths...</div>
         </div>
     </section>
 
@@ -53,100 +444,306 @@
     <section class="section">
         <h2>Recommended for You</h2>
         <div id="recommendations" class="path-grid">
-            <div class="loading">Loading recommendations...</div>
+            <div class="themed-card loading">Loading recommendations...</div>
         </div>
     </section>
 
     <!-- Achievements -->
     <section class="section">
-        <h2>Your Achievements</h2>
+        <h2>Your Achievements <small style="font-size: 0.9rem; color: #999; font-weight: 400; margin-left: 10px; font-style: italic;">(Click to celebrate)</small></h2>
         <div id="achievements" class="achievements-grid">
-            <div class="loading">Loading achievements...</div>
+            <div class="themed-card loading">Loading achievements...</div>
         </div>
     </section>
 </div>
 
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+{% endblock %}
+
+{% block extra_js %}
 <script>
+// API Call Helper
+async function apiCall(url, method = 'GET', data = null) {
+    const token = localStorage.getItem('access_token') || localStorage.getItem('authToken');
+    
+    const options = {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` })
+        }
+    };
+
+    if (data) options.body = JSON.stringify(data);
+
+    const response = await fetch(url, options);
+    if (!response.ok) {
+        const error = new Error('Network response was not ok');
+        error.status = response.status;
+        throw error; 
+    }
+    return response.json();
+}
+
+// --- UTILITY FUNCTIONS ---
+
+function showToast(message, type = 'normal') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    let icon = '';
+    if (type === 'success') icon = `<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+    else icon = `<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+
+    toast.innerHTML = `${icon} <span>${message}</span>`;
+    container.appendChild(toast);
+    
+    // Trigger reflow
+    void toast.offsetWidth; 
+    toast.classList.add('show');
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+function animateValue(obj, start, end, duration) {
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        // Ease out quart
+        const easeProgress = 1 - Math.pow(1 - progress, 4);
+        
+        obj.innerHTML = Math.floor(progress * (end - start) + start);
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        } else {
+            obj.innerHTML = end;
+        }
+    };
+    window.requestAnimationFrame(step);
+}
+
+function triggerConfetti(element) {
+    const rect = element.getBoundingClientRect();
+    const colors = ['#FFD700', '#FF4500', '#00BFFF', '#32CD32', '#FF69B4'];
+    
+    for (let i = 0; i < 40; i++) {
+        const confetti = document.createElement('div');
+        confetti.classList.add('confetti');
+        confetti.style.left = (rect.left + rect.width / 2) + 'px';
+        confetti.style.top = (rect.top + rect.height / 2) + 'px';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        
+        // Random movement
+        const x = (Math.random() - 0.5) * window.innerWidth * 0.5;
+        confetti.style.setProperty('--tx', `${x}px`);
+        
+        // Random animation duration
+        const duration = 1 + Math.random() * 2;
+        confetti.style.animationDuration = `${duration}s`;
+        
+        document.body.appendChild(confetti);
+        setTimeout(() => confetti.remove(), duration * 1000);
+    }
+}
+
+function setGreeting() {
+    const hour = new Date().getHours();
+    const greetingEl = document.getElementById('greetingText');
+    let greeting = "Good Morning";
+    if (hour >= 12 && hour < 17) greeting = "Good Afternoon";
+    else if (hour >= 17) greeting = "Good Evening";
+    
+    // Replace the whole text or just the greeting part? Let's replace the whole h1 content nicely
+    const nameSpan = document.getElementById('userFirstName');
+    const name = nameSpan.textContent;
+    greetingEl.innerHTML = `${greeting}, <span id="userFirstName">${name}</span>!`;
+}
+
+// --- CHART GENERATION ---
+function generateWeeklyChart(totalHours) {
+    const container = document.getElementById('activityChart');
+    container.innerHTML = '';
+    
+    // Generate 7 bars (Mon-Sun) based on a simulated distribution
+    // This is a visual simulation since API might not give daily breakdown
+    const days = 7;
+    let distributed = [];
+    let remaining = totalHours;
+    
+    for(let i=0; i<days; i++) {
+        let val = 0;
+        if (remaining > 0) {
+            // Random chunk of hours, capped at 5
+            val = Math.min(Math.random() * (remaining * 0.4) + 0.1, 5); 
+            if (remaining < val) val = remaining;
+            remaining -= val;
+        }
+        distributed.push(val);
+    }
+    
+    // Find max for scaling
+    const maxVal = Math.max(...distributed, 5); // min scale 5 hours
+    
+    distributed.forEach((val, idx) => {
+        const bar = document.createElement('div');
+        bar.className = `chart-bar ${idx === new Date().getDay() || (idx === 0 && new Date().getDay() === 7) ? 'active' : ''}`;
+        // Height relative to maxVal
+        const heightPct = (val / maxVal) * 100;
+        bar.style.height = '0%'; // Start at 0
+        container.appendChild(bar);
+        
+        // Animate height
+        setTimeout(() => {
+            bar.style.height = `${Math.max(heightPct, 5)}%`; // Minimum 5% height for visibility
+        }, 500 + (idx * 100));
+    });
+}
+
 async function loadDashboard() {
     try {
-        // Load dashboard stats
+        setGreeting();
+        const token = localStorage.getItem('access_token') || localStorage.getItem('authToken');
+        if (!token) { window.location.href = '/login/'; return; }
+
         const dashboardData = await apiCall('/api/auth/profile/dashboard/');
         
-        // Update stats
-        document.getElementById('enrolledPaths').textContent = dashboardData.learning_stats.enrolled_paths;
-        document.getElementById('completedPaths').textContent = dashboardData.learning_stats.completed_paths;
-        document.getElementById('currentStreak').textContent = dashboardData.learning_stats.current_streak;
-        document.getElementById('totalTime').textContent = Math.round(dashboardData.learning_stats.total_time_spent / 60);
+        // Update User Name
+        if (dashboardData.user && dashboardData.user.first_name) {
+            const firstName = dashboardData.user.first_name;
+            document.getElementById('userFirstName').textContent = firstName;
+            // Re-trigger greeting with correct name
+            setGreeting(); 
+            
+            const desktopName = document.getElementById('desktopUserName');
+            const mobileName = document.getElementById('mobileUserName');
+            if(desktopName) desktopName.textContent = firstName;
+            if(mobileName) mobileName.textContent = firstName;
+        }
+
+        // --- ANIMATE STATS ---
+        const stats = dashboardData.learning_stats;
+        const animateStat = (id, value) => {
+            const el = document.getElementById(id);
+            if(el) animateValue(el, 0, value, 1500);
+        };
+
+        animateStat('enrolledPaths', stats.enrolled_paths || 0);
+        animateStat('completedPaths', stats.completed_paths || 0);
+        animateStat('currentStreak', stats.current_streak || 0);
         
-        // Load in-progress paths
+        const totalHours = Math.round((stats.total_time_spent || 0) / 60);
+        animateStat('totalHoursDisplay', totalHours);
+        generateWeeklyChart(totalHours);
+
+        // --- RENDER PATHS ---
         const inProgressPaths = dashboardData.progress_overview.paths.filter(p => p.status === 'in_progress');
         const inProgressContainer = document.getElementById('inProgressPaths');
         
         if (inProgressPaths.length === 0) {
-            inProgressContainer.innerHTML = '<p class="empty-state">No learning paths in progress. <a href="/learning-paths/">Browse learning paths</a></p>';
+            inProgressContainer.innerHTML = '<div class="themed-card" style="text-align:center; padding: 2rem;"><h3>No active paths</h3><p>Ready to start something new?</p><br><a href="/learning-paths/" class="btn btn-primary">Browse Paths</a></div>';
         } else {
-            inProgressContainer.innerHTML = inProgressPaths.map(path => `
-                <div class="path-card">
+            inProgressContainer.innerHTML = inProgressPaths.map((path, index) => `
+                <div class="path-card themed-card stagger-in" style="animation-delay: ${index * 0.1}s">
                     <h3>${path.title}</h3>
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${path.progress_percentage}%"></div>
+                        <div class="progress-fill" style="width: 0%" data-width="${path.progress_percentage}%"></div>
                     </div>
-                    <p>${Math.round(path.progress_percentage)}% complete</p>
-                    <a href="/learning-paths/${path.id}/" class="btn btn-primary">Continue</a>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                        <small>${Math.round(path.progress_percentage)}% complete</small>
+                        <small style="color:var(--brand-primary)">${path.completed_modules || 0}/${path.total_modules || 0} Modules</small>
+                    </div>
+                    <a href="/learning-paths/${path.slug || path.id}/" class="btn btn-primary">Continue Learning</a>
                 </div>
             `).join('');
+            
+            // Trigger Progress Bar Animations after render
+            setTimeout(() => {
+                document.querySelectorAll('#inProgressPaths .progress-fill').forEach(bar => {
+                    bar.style.width = bar.dataset.width;
+                });
+            }, 500);
         }
         
-        // Load recommendations
-        const recommendations = await apiCall('/api/recommendations/recommendations/');
-        const recsContainer = document.getElementById('recommendations');
-        
-        if (recommendations.length === 0) {
-            recsContainer.innerHTML = '<p class="empty-state">No recommendations available yet.</p>';
-        } else {
-            recsContainer.innerHTML = recommendations.slice(0, 3).map(rec => {
-                const path = rec.learning_path_detail;
-                return `
-                    <div class="path-card">
-                        <div class="recommendation-badge">${rec.recommendation_type.replace('_', ' ')}</div>
-                        <h3>${path.title}</h3>
-                        <p>${path.description.substring(0, 100)}...</p>
-                        <small>${rec.reasoning}</small>
-                        <a href="/learning-paths/${path.slug}/" class="btn btn-outline" onclick="markRecommendationClicked(${rec.id})">Explore</a>
-                    </div>
-                `;
-            }).join('');
+        // --- RENDER RECOMMENDATIONS ---
+        try {
+            const recommendations = await apiCall('/api/recommendations/recommendations/');
+            const recsContainer = document.getElementById('recommendations');
+            
+            if (recommendations && recommendations.length > 0) {
+                recsContainer.innerHTML = recommendations.slice(0, 3).map((rec, index) => {
+                    const path = rec.learning_path_detail;
+                    return `
+                        <div class="path-card themed-card stagger-in" style="animation-delay: ${index * 0.1 + 0.3}s">
+                            <div class="recommendation-badge">${rec.recommendation_type.replace('_', ' ')}</div>
+                            <h3>${path.title}</h3>
+                            <p>${path.description ? path.description.substring(0, 100) + '...' : 'No description available.'}</p>
+                            <small style="font-style:italic; display:block; margin-bottom:1rem; color:var(--text-secondary)">"${rec.reasoning}"</small>
+                            <a href="/learning-paths/${path.slug}/" class="btn btn-outline" onclick="markRecommendationClicked(${rec.id}, this)">Explore</a>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                recsContainer.innerHTML = '<div class="themed-card empty-state">Complete more modules to unlock personalized recommendations!</div>';
+            }
+        } catch (recError) {
+            document.getElementById('recommendations').innerHTML = '';
         }
         
-        // Load achievements
+        // --- RENDER ACHIEVEMENTS ---
         const achievementsContainer = document.getElementById('achievements');
-        if (dashboardData.achievements.length === 0) {
-            achievementsContainer.innerHTML = '<p class="empty-state">Keep learning to unlock achievements!</p>';
-        } else {
-            achievementsContainer.innerHTML = dashboardData.achievements.map(ach => `
-                <div class="achievement-card">
-                    <div class="achievement-icon">${ach.icon}</div>
+        if (dashboardData.achievements && dashboardData.achievements.length > 0) {
+            achievementsContainer.innerHTML = dashboardData.achievements.map((ach, index) => `
+                <div class="achievement-card themed-card stagger-in" style="animation-delay: ${index * 0.1 + 0.5}s" onclick="triggerConfetti(this)">
+                    <div class="achievement-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+                    </div>
                     <h4>${ach.title}</h4>
                     <p>${ach.description}</p>
+                    <small style="color:var(--accent-green); font-weight:600; font-size:0.75rem; margin-top:5px; display:block;">UNLOCKED</small>
                 </div>
             `).join('');
+        } else {
+            achievementsContainer.innerHTML = '<div class="themed-card empty-state">Keep learning to unlock achievements!</div>';
         }
         
     } catch (error) {
         console.error('Error loading dashboard:', error);
+        if (error.status === 401 || error.status === 403) {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('authToken');
+            window.location.href = '/login/';
+        } else {
+            document.getElementById('inProgressPaths').innerHTML = '<div class="themed-card" style="color:red; text-align:center;">Failed to load data. Please refresh.</div>';
+        }
     }
 }
 
-async function markRecommendationClicked(recId) {
+async function markRecommendationClicked(recId, btnElement) {
     try {
         await apiCall(`/api/recommendations/recommendations/${recId}/mark_clicked/`, 'POST');
+        showToast("Interest Recorded! We'll improve your feed.", "success");
+        // Visual feedback on button
+        const originalText = btnElement.innerText;
+        btnElement.innerText = "Recorded!";
+        btnElement.classList.add('btn-primary');
+        btnElement.classList.remove('btn-outline');
+        setTimeout(() => {
+            btnElement.innerText = originalText;
+            btnElement.classList.remove('btn-primary');
+            btnElement.classList.add('btn-outline');
+        }, 2000);
     } catch (error) {
         console.error('Error marking recommendation:', error);
     }
 }
 
-// Load dashboard on page load
+// Initialize Dashboard
 document.addEventListener('DOMContentLoaded', loadDashboard);
 </script>
 {% endblock %}
-

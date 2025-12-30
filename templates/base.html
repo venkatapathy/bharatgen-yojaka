@@ -4,56 +4,581 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}BharatGen Acharya{% endblock %}</title>
+    
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/styles.css">
+
+    <!-- DJANGO CSRF TOKEN FIX -->
+    {% csrf_token %}
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
+    <style>
+        /* --- CSS VARIABLES --- */
+        :root {
+            --bg-gradient-start: #FDFDFD;
+            --bg-gradient-end: #F0F2F5;
+            --body-gradient-start: #E8ECEF;
+            --body-gradient-end: #E3E7E9;
+            
+            --text-primary: #1a1a1a;
+            --text-secondary: #555555;
+            
+            --brand-primary: #000080; /* Navy Blue */
+            --accent-orange: #FF9933;
+            --accent-green: #138808;
+            
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            
+            /* Shadows */
+            --shadow-float: 0px 20px 40px rgba(0, 0, 0, 0.08);
+            --shadow-inner-top: 0px -4px 20px rgba(255, 255, 255, 0.9);
+            --shadow-btn: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        /* --- GLOBAL RESETS --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--body-gradient-start), var(--body-gradient-end));
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* --- UTILITIES --- */
+        .container {
+            width: 100%;
+            max-width: 1280px; 
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* --- NAVBAR WRAPPER --- */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            width: 100%;
+            padding: 1.5rem 0;
+            background: transparent;
+            transition: background 0.3s ease, padding 0.3s ease;
+        }
+
+        .nav-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        /* --- LOGO --- */
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            z-index: 1002;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(4px);
+            padding: 0.5rem 1rem;
+            border-radius: 99px;
+            border: 1px solid rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .brand-logo:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .brand-logo svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .brand-name {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--brand-primary);
+            letter-spacing: -0.02em;
+        }
+
+        /* --- DESKTOP CYLINDER MENU --- */
+        .desktop-cylinder {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-inner-top), var(--shadow-float);
+            border-radius: 9999px;
+            padding: 0.5rem 0.75rem;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.95rem;
+            padding: 0.6rem 1.25rem;
+            border-radius: 9999px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--brand-primary);
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        .nav-link.active {
+            color: var(--brand-primary);
+            background: rgba(255, 255, 255, 0.8);
+            font-weight: 600;
+        }
+
+        .nav-separator {
+            width: 1px;
+            height: 24px;
+            background: rgba(0,0,0,0.08);
+            margin: 0 0.25rem;
+        }
+
+        /* User Pill */
+        .nav-user-pill {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding-left: 1rem;
+            margin-left: 0.25rem;
+            border-left: 1px solid rgba(0,0,0,0.08);
+        }
+
+        .user-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* --- BUTTONS --- */
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            border-radius: 99px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .btn-outline {
+            background: rgba(0,0,0,0.05);
+            color: var(--text-primary);
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .btn-outline:hover {
+            background: var(--brand-primary);
+            color: white;
+            border-color: var(--brand-primary);
+            box-shadow: 0 4px 12px rgba(0, 0, 128, 0.2);
+        }
+
+        /* --- MOBILE TOGGLE (HAMBURGER) --- */
+        .mobile-toggle {
+            display: none;
+            z-index: 1002;
+            background: none;
+            border: none;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.4);
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-btn);
+        }
+        
+        .toggle-icon {
+            position: relative;
+            width: 22px;
+            height: 18px;
+        }
+        
+        .toggle-icon span {
+            display: block;
+            position: absolute;
+            height: 2px;
+            width: 100%;
+            background: var(--brand-primary);
+            border-radius: 2px;
+            opacity: 1;
+            left: 0;
+            transform: rotate(0deg);
+            transition: .25s ease-in-out;
+        }
+
+        .toggle-icon span:nth-child(1) { top: 0px; }
+        .toggle-icon span:nth-child(2) { top: 8px; width: 70%; }
+        .toggle-icon span:nth-child(3) { top: 16px; }
+
+        .mobile-toggle.open .toggle-icon span:nth-child(1) {
+            top: 8px;
+            transform: rotate(135deg);
+        }
+        .mobile-toggle.open .toggle-icon span:nth-child(2) {
+            opacity: 0;
+            left: -60px;
+        }
+        .mobile-toggle.open .toggle-icon span:nth-child(3) {
+            top: 8px;
+            transform: rotate(-135deg);
+        }
+
+        /* --- MOBILE OVERLAY & DRAWER --- */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+        .overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .mobile-drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 100%;
+            max-width: 320px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            z-index: 1001;
+            box-shadow: -10px 0 40px rgba(0,0,0,0.1);
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            padding: 6rem 2rem 2rem 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            border-left: 1px solid rgba(255,255,255,0.5);
+        }
+
+        .mobile-drawer.active {
+            transform: translateX(0);
+        }
+
+        .mobile-nav-link {
+            display: block;
+            padding: 1rem 0;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            transition: color 0.2s;
+        }
+
+        .mobile-nav-link:hover, .mobile-nav-link.active {
+            color: var(--brand-primary);
+            padding-left: 10px;
+        }
+
+        .mobile-user-section {
+            margin-top: auto;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            flex: 1;
+            padding-top: 1rem;
+            padding-bottom: 4rem;
+        }
+
+        /* --- FOOTER --- */
+        .footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        /* --- TOAST NOTIFICATION --- */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #1a1a1a;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 2000;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 1024px) {
+            .desktop-cylinder { display: none; }
+            .mobile-toggle { display: flex; }
+            .navbar { padding: 1rem 0; }
+        }
+    </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+
+    <!-- Overlay for Mobile -->
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+    <!-- Navigation -->
     <nav class="navbar">
-        <div class="container">
-            <div class="nav-brand">
-                <a href="/">
-                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 0.5rem;">
-                        <path d="M20 8C14 6 6 8 6 8V30C6 30 14 28 20 30V8Z" fill="#FF9933" fill-opacity="0.9"/>
-                        <path d="M20 8C26 6 34 8 34 8V30C34 30 26 28 20 30V8Z" fill="#138808" fill-opacity="0.9"/>
-                        <path d="M20 8V30" stroke="#000080" stroke-width="2" stroke-linecap="round"/>
-                        <circle cx="20" cy="19" r="3" fill="#000080"/>
-                        <circle cx="12" cy="15" r="2" fill="#000080"/>
-                        <circle cx="28" cy="23" r="2" fill="#000080"/>
-                        <line x1="20" y1="19" x2="12" y2="15" stroke="#000080" stroke-width="1"/>
-                        <line x1="20" y1="19" x2="28" y2="23" stroke="#000080" stroke-width="1"/>
-                    </svg>
-                    <span>BharatGen Acharya</span>
-                </a>
+        <div class="container nav-inner">
+            
+            <!-- LOGO (Always Visible) -->
+            <a href="/" class="brand-logo">
+                <svg width="100%" height="100%" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 8C14 6 6 8 6 8V30C6 30 14 28 20 30V8Z" fill="#FF9933" fill-opacity="0.9"/>
+                    <path d="M20 8C26 6 34 8 34 8V30C34 30 26 28 20 30V8Z" fill="#138808" fill-opacity="0.9"/>
+                    <path d="M20 8V30" stroke="#000080" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="20" cy="19" r="3" fill="#000080"/>
+                    <circle cx="12" cy="15" r="2" fill="#000080"/>
+                    <circle cx="28" cy="23" r="2" fill="#000080"/>
+                    <line x1="20" y1="19" x2="12" y2="15" stroke="#000080" stroke-width="1"/>
+                    <line x1="20" y1="19" x2="28" y2="23" stroke="#000080" stroke-width="1"/>
+                </svg>
+                <span class="brand-name">BharatGen</span>
+            </a>
+
+            <!-- DESKTOP CYLINDER MENU (Content injected via JS) -->
+            <div class="desktop-cylinder" id="desktopMenu">
+                <!-- JS will populate this based on Login state -->
             </div>
-            <div class="nav-menu" id="navMenu">
-                <a href="/" class="nav-link">Dashboard</a>
-                <a href="/learning-paths/" class="nav-link">Learning Paths</a>
-                <a href="/chat/" class="nav-link">AI Chat</a>
-                <div class="nav-user" id="navUser">
-                    <span id="userName" style="color: var(--text-primary);">Loading...</span>
-                    <button onclick="logout()" class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Logout</button>
+
+            <!-- MOBILE TOGGLE BUTTON -->
+            <button class="mobile-toggle" id="mobileToggle" onclick="toggleMenu()" aria-label="Toggle Navigation">
+                <div class="toggle-icon">
+                    <span></span>
+                    <span></span>
+                    <span></span>
                 </div>
-            </div>
-            <div class="nav-toggle" onclick="toggleMenu()">
-                <span style="font-size: 1.5rem;">☰</span>
-            </div>
+            </button>
         </div>
     </nav>
 
+    <!-- MOBILE DRAWER (Content injected via JS) -->
+    <div class="mobile-drawer" id="mobileDrawer">
+        <!-- JS will populate this based on Login state -->
+    </div>
+
+    <!-- Main Content -->
     <main class="main-content">
         {% block content %}{% endblock %}
     </main>
 
+    <!-- Footer -->
     <footer class="footer">
         <div class="container">
             <p>&copy; 2024 BharatGen Acharya. Powered by Llama 3.1 & RAG.</p>
         </div>
     </footer>
 
+    <!-- Toast Notification Element -->
+    <div id="toast" class="toast">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span id="toastMsg">Action Successful</span>
+    </div>
+
+    <!-- JavaScript -->
     <script src="/static/js/main.js"></script>
+        <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('access_token') || localStorage.getItem('authToken');
+            const desktopMenu = document.getElementById('desktopMenu');
+            const mobileDrawer = document.getElementById('mobileDrawer');
+            
+            // HTML TEMPLATES FOR AUTH STATES
+            const loggedOutDesktopHTML = `
+                <a href="/login/" class="nav-link active">Login</a>
+                <a href="/register/" class="nav-link">Register</a>
+            `;
+
+            const loggedInDesktopHTML = `
+                <a href="/" class="nav-link active">Dashboard</a>
+                <a href="/learning-paths/" class="nav-link">Courses</a>
+                <a href="/chat/" class="nav-link">AI Chat</a>
+                <div class="nav-separator"></div>
+                <div class="nav-user-pill">
+                    <span class="user-name" id="desktopUserName">Loading...</span>
+                    <button onclick="handleLogout()" class="btn-sm btn-outline">Logout</button>
+                </div>
+            `;
+
+            const loggedOutMobileHTML = `
+                <a href="/login/" class="mobile-nav-link" onclick="toggleMenu()">Login</a>
+                <a href="/register/" class="mobile-nav-link" onclick="toggleMenu()">Register</a>
+            `;
+
+            const loggedInMobileHTML = `
+                <a href="/" class="mobile-nav-link" onclick="toggleMenu()">Dashboard</a>
+                <a href="/learning-paths/" class="mobile-nav-link" onclick="toggleMenu()">Courses</a>
+                <a href="/chat/" class="mobile-nav-link" onclick="toggleMenu()">AI Chat</a>
+                <div class="mobile-user-section">
+                    <p style="color:var(--text-secondary); margin-bottom: 0.5rem;">Signed in as</p>
+                    <h3 id="mobileUserName" style="color:var(--text-primary); margin-bottom: 1rem;">Loading...</h3>
+                    <button onclick="handleLogout()" class="btn-sm btn-outline" style="width: 100%; background: var(--text-primary); color: white; border:none;">Logout</button>
+                </div>
+            `;
+
+            // --- LOGIC TO INJECT CONTENT ---
+            if (token) {
+                // User IS logged in
+                desktopMenu.innerHTML = loggedInDesktopHTML;
+                mobileDrawer.innerHTML = loggedInMobileHTML;
+
+                // DYNAMIC NAME LOGIC (No more hardcoded mock!)
+                const storedUserJSON = localStorage.getItem('user');
+                let displayName = "Learner"; // Default fallback
+
+                if (storedUserJSON) {
+                    try {
+                        const userObj = JSON.parse(storedUserJSON);
+                        
+                        // Priority: First Name + Last Name -> Username -> Learner
+                        if (userObj.first_name) {
+                            displayName = userObj.first_name;
+                            if (userObj.last_name) {
+                                displayName += " " + userObj.last_name;
+                            }
+                        } else if (userObj.username) {
+                            displayName = userObj.username;
+                        }
+                    } catch (e) {
+                        console.error("Error parsing user data", e);
+                    }
+                }
+
+                // Update DOM
+                const desktopName = document.getElementById('desktopUserName');
+                const mobileName = document.getElementById('mobileUserName');
+
+                if(desktopName) desktopName.textContent = displayName;
+                if(mobileName) mobileName.textContent = displayName;
+
+            } else {
+                // User IS NOT logged in
+                desktopMenu.innerHTML = loggedOutDesktopHTML;
+                mobileDrawer.innerHTML = loggedOutMobileHTML;
+
+                // SECURITY REDIRECT
+                if (window.location.pathname === '/' || window.location.pathname === '/dashboard/') {
+                    window.location.href = '/login/';
+                }
+            }
+        });
+
+        // Toggle Mobile Menu
+        function toggleMenu() {
+            const drawer = document.getElementById('mobileDrawer');
+            const overlay = document.getElementById('overlay');
+            const toggleBtn = document.getElementById('mobileToggle');
+            const body = document.body;
+
+            const isActive = drawer.classList.contains('active');
+
+            if (isActive) {
+                drawer.classList.remove('active');
+                overlay.classList.remove('active');
+                toggleBtn.classList.remove('open');
+                body.style.overflow = ''; 
+            } else {
+                drawer.classList.add('active');
+                overlay.classList.add('active');
+                toggleBtn.classList.add('open');
+                body.style.overflow = 'hidden';
+            }
+        }
+
+        // Close menu on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const drawer = document.getElementById('mobileDrawer');
+                if (drawer.classList.contains('active')) {
+                    toggleMenu();
+                }
+            }
+        });
+
+        // Custom Toast Notification
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const msg = document.getElementById('toastMsg');
+            
+            msg.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Logout Handling
+        function handleLogout() {
+            // Clear all tokens
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user'); // Clear user data
+            
+            toggleMenu(); // Close menu if open
+            showToast("Logged out successfully");
+            
+            // Redirect to Login after short delay
+            setTimeout(() => {
+                window.location.href = '/login/';
+            }, 1000);
+        }
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

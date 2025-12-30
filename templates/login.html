@@ -4,12 +4,210 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - BharatGen Acharya</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400,0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- DJANGO CSRF TOKEN FIX -->
+    {% csrf_token %}
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
+    <style>
+        /* --- THEME VARIABLES --- */
+        :root {
+            --bg-gradient-start: #E8ECEF;
+            --bg-gradient-end: #E3E7E9;
+            --text-primary: #1a1a1a;
+            --text-secondary: #555555;
+            --brand-primary: #000080; /* Navy Blue */
+            --brand-hover: #000060;
+            --accent-orange: #FF9933;
+            --accent-green: #138808;
+            --error-color: #D32F2F;
+            
+            --glass-bg: rgba(255, 255, 255, 0.9);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --shadow-float: 0px 20px 40px rgba(0, 0, 0, 0.08);
+            --shadow-btn: 0 4px 12px rgba(0, 0, 128, 0.25);
+        }
+
+        /* --- GLOBAL RESET --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* --- PAGE LAYOUT --- */
+        .auth-page {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+            padding: 2rem 1rem;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        /* --- AUTH CARD (GLASSMORPHISM) --- */
+        .auth-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-float);
+            border-radius: 24px;
+            padding: 3rem 2.5rem;
+            text-align: center;
+        }
+
+        /* --- HEADER & LOGO --- */
+        .auth-card h1 {
+            font-family: 'Inter', sans-serif; /* Keep brand name in Inter */
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--brand-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .auth-card h1 svg {
+            transition: transform 0.3s ease;
+        }
+
+        .auth-card h1:hover svg {
+            transform: rotate(-5deg) scale(1.1);
+        }
+
+        .auth-card h2 {
+            font-family: 'Merriweather', serif;
+            font-size: 1.75rem;
+            color: var(--text-primary);
+            margin: 1.5rem 0 0.5rem 0;
+        }
+
+        .auth-card > p {
+            color: var(--text-secondary);
+            margin-bottom: 2.5rem;
+            font-size: 0.95rem;
+        }
+
+        /* --- FORM STYLES --- */
+        #loginForm {
+            text-align: left;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            margin-left: 0.25rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(0,0,0,0.1);
+            background: rgba(255,255,255,0.5);
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--brand-primary);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(0, 0, 128, 0.1);
+        }
+
+        .error-message {
+            color: var(--error-color);
+            background: rgba(211, 47, 47, 0.1);
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            border: 1px solid rgba(211, 47, 47, 0.2);
+            display: none; /* Hidden by default */
+        }
+
+        /* --- BUTTONS --- */
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 99px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--brand-primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 128, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: var(--brand-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 128, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        /* --- FOOTER LINKS --- */
+        .auth-footer {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .auth-footer a {
+            color: var(--brand-primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+
+        .auth-footer a:hover {
+            color: var(--accent-orange);
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body class="auth-page">
     <div class="auth-container">
         <div class="auth-card">
-            <h1 style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+            <h1>
+                <!-- Brand Logo SVG -->
                 <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M20 8C14 6 6 8 6 8V30C6 30 14 28 20 30V8Z" fill="#FF9933" fill-opacity="0.9"/>
                     <path d="M20 8C26 6 34 8 34 8V30C34 30 26 28 20 30V8Z" fill="#138808" fill-opacity="0.9"/>
@@ -28,17 +226,17 @@
             <form id="loginForm" onsubmit="handleLogin(event)">
                 <div class="form-group">
                     <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required>
+                    <input type="text" id="username" name="username" required placeholder="Enter your username">
                 </div>
                 
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required>
+                    <input type="password" id="password" name="password" required placeholder="Enter your password">
                 </div>
                 
                 <div id="errorMessage" class="error-message"></div>
                 
-                <button type="submit" class="btn btn-primary btn-block">Login</button>
+                <button type="submit" class="btn btn-primary">Login</button>
             </form>
             
             <p class="auth-footer">
@@ -54,38 +252,93 @@
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const errorDiv = document.getElementById('errorMessage');
+            const btn = document.querySelector('.btn-primary');
+            const originalBtnText = btn.textContent;
+            
+            // UI Feedback: Loading state
+            btn.textContent = "Signing in...";
+            btn.style.opacity = "0.7";
+            btn.disabled = true;
+            errorDiv.style.display = 'none';
+            
+            // DEBUGGING: Print what is being sent to console
+            console.log("Attempting Login for:", username);
             
             try {
+                // Get CSRF Token
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                console.log("CSRF Token found:", !!csrfToken);
+
                 const response = await fetch('/api/auth/login/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
                     },
                     body: JSON.stringify({ username, password })
                 });
                 
+                console.log("Server Response Status:", response.status);
+                
+                // Parse JSON
                 const data = await response.json();
+                console.log("Server Response Data:", data);
                 
                 if (response.ok) {
-                    // Store tokens
-                    localStorage.setItem('authToken', data.tokens.access);
-                    localStorage.setItem('access_token', data.tokens.access);
-                    localStorage.setItem('refresh_token', data.tokens.refresh);
-                    localStorage.setItem('user', JSON.stringify(data.user));
+                    // --- SUCCESS LOGIC ---
+                    // ROBUST TOKEN EXTRACTION:
+                    // Django SimpleJWT usually returns { access: "...", refresh: "..." }
+                    // Some custom serializers might return { tokens: { access: "..." } }
+                    const accessToken = data.access || (data.tokens ? data.tokens.access : null);
+                    const refreshToken = data.refresh || (data.tokens ? data.tokens.refresh : null);
                     
-                    // Redirect to dashboard
-                    window.location.href = '/';
+                    if (accessToken) {
+                        // Store tokens
+                        localStorage.setItem('authToken', accessToken);
+                        localStorage.setItem('access_token', accessToken);
+                        localStorage.setItem('refresh_token', refreshToken);
+                        
+                        // Store User Info if provided
+                        if (data.user) {
+                            localStorage.setItem('user', JSON.stringify(data.user));
+                        } else if (data.username) {
+                            localStorage.setItem('user', JSON.stringify({ username: data.username }));
+                        }
+                        
+                        console.log("Login Successful! Redirecting...");
+                        window.location.href = '/';
+                    } else {
+                        throw new Error("Login successful, but the server did not return a token. (Check console for details)");
+                    }
+
                 } else {
-                    errorDiv.textContent = data.error || 'Login failed. Please try again.';
+                    // --- FAILURE LOGIC ---
+                    // Check common Django/DRF error fields
+                    let errorMsg = "Login failed. Please try again.";
+                    
+                    if (data.detail) errorMsg = data.detail;
+                    else if (data.non_field_errors) errorMsg = data.non_field_errors.join(" ");
+                    else if (data.error) errorMsg = data.error;
+                    else if (typeof data === 'string') errorMsg = data;
+                    else errorMsg = JSON.stringify(data); // Show raw data if unknown structure
+                    
+                    throw new Error(errorMsg);
                 }
             } catch (error) {
-                errorDiv.textContent = 'An error occurred. Please try again.';
-                console.error('Login error:', error);
+                console.error("Login Script Error:", error);
+                errorDiv.textContent = error.message;
+                errorDiv.style.display = 'block';
+                
+                // Reset Button
+                btn.textContent = originalBtnText;
+                btn.style.opacity = "1";
+                btn.disabled = false;
             }
         }
         
         // Redirect if already logged in
         if (localStorage.getItem('access_token') || localStorage.getItem('authToken')) {
+            console.log("Token found in storage. Verifying...");
             // Verify token validity before auto-redirecting
             fetch('/api/auth/me/', {
                 headers: {
@@ -93,8 +346,10 @@
                 }
             }).then(res => {
                 if (res.ok) {
+                    console.log("Token valid. Redirecting to dashboard.");
                     window.location.href = '/';
                 } else {
+                    console.log("Token invalid. Clearing storage.");
                     // Clear invalid tokens to prevent loop
                     localStorage.removeItem('access_token');
                     localStorage.removeItem('refresh_token');
@@ -102,6 +357,7 @@
                     localStorage.removeItem('user');
                 }
             }).catch(() => {
+                console.log("Error verifying token. Clearing storage.");
                 // On error, also clear
                 localStorage.removeItem('access_token');
                 localStorage.removeItem('refresh_token');
@@ -112,4 +368,3 @@
     </script>
 </body>
 </html>
-

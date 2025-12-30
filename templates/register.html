@@ -4,12 +4,249 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - BharatGen Acharya</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400,0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- DJANGO CSRF TOKEN FIX -->
+    {% csrf_token %}
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
+    <style>
+        /* --- THEME VARIABLES --- */
+        :root {
+            --bg-gradient-start: #E8ECEF;
+            --bg-gradient-end: #E3E7E9;
+            --text-primary: #1a1a1a;
+            --text-secondary: #555555;
+            --brand-primary: #000080; /* Navy Blue */
+            --brand-hover: #000060;
+            --accent-orange: #FF9933;
+            --accent-green: #138808;
+            --error-color: #D32F2F;
+            
+            --glass-bg: rgba(255, 255, 255, 0.9);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --shadow-float: 0px 20px 40px rgba(0, 0, 0, 0.08);
+            --shadow-btn: 0 4px 12px rgba(0, 0, 128, 0.25);
+        }
+
+        /* --- GLOBAL RESET --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* --- PAGE LAYOUT --- */
+        .auth-page {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+            padding: 2rem 1rem;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 480px; /* Slightly wider to accommodate side-by-side inputs */
+        }
+
+        /* --- AUTH CARD --- */
+        .auth-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-float);
+            border-radius: 24px;
+            padding: 3rem 2.5rem;
+            text-align: center;
+        }
+
+        /* --- HEADER & LOGO --- */
+        .auth-card h1 {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--brand-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .auth-card h1 svg {
+            transition: transform 0.3s ease;
+        }
+
+        .auth-card h1:hover svg {
+            transform: rotate(-5deg) scale(1.1);
+        }
+
+        .auth-card h2 {
+            font-family: 'Merriweather', serif;
+            font-size: 1.75rem;
+            color: var(--text-primary);
+            margin: 1.5rem 0 0.5rem 0;
+        }
+
+        .auth-card > p {
+            color: var(--text-secondary);
+            margin-bottom: 2.5rem;
+            font-size: 0.95rem;
+        }
+
+        /* --- FORM STYLES --- */
+        #registerForm {
+            text-align: left;
+            margin-bottom: 2rem;
+        }
+
+        /* Split Row for Names */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            margin-left: 0.25rem;
+        }
+
+        /* Shared Input/Select Styling */
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.85rem 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(0,0,0,0.1);
+            background: rgba(255,255,255,0.5);
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        /* Custom Select Arrow */
+        .form-group select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23555' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 1rem center;
+            background-repeat: no-repeat;
+            background-size: 1.25em 1.25em;
+            padding-right: 3rem; /* Make room for arrow */
+            cursor: pointer;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            background: #fff;
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 3px rgba(0, 0, 128, 0.1);
+        }
+
+        .error-message {
+            color: var(--error-color);
+            background: rgba(211, 47, 47, 0.1);
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            border: 1px solid rgba(211, 47, 47, 0.2);
+            line-height: 1.4;
+            display: none;
+        }
+
+        /* --- BUTTONS --- */
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 99px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--brand-primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 128, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: var(--brand-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 128, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* --- FOOTER LINKS --- */
+        .auth-footer {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .auth-footer a {
+            color: var(--brand-primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+
+        .auth-footer a:hover {
+            color: var(--accent-orange);
+            text-decoration: underline;
+        }
+
+        /* --- RESPONSIVE ADJUSTMENTS --- */
+        @media (max-width: 480px) {
+            .auth-container {
+                max-width: 100%;
+            }
+            .form-row {
+                grid-template-columns: 1fr; /* Stack names on mobile */
+            }
+            .auth-card {
+                padding: 2rem 1.5rem;
+            }
+        }
+    </style>
 </head>
 <body class="auth-page">
     <div class="auth-container">
         <div class="auth-card">
-            <h1 style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+            <h1>
+                <!-- Brand Logo SVG -->
                 <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M20 8C14 6 6 8 6 8V30C6 30 14 28 20 30V8Z" fill="#FF9933" fill-opacity="0.9"/>
                     <path d="M20 8C26 6 34 8 34 8V30C34 30 26 28 20 30V8Z" fill="#138808" fill-opacity="0.9"/>
@@ -29,33 +266,35 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="first_name">First Name</label>
-                        <input type="text" id="first_name" name="first_name" required>
+                        <input type="text" id="first_name" name="first_name" required placeholder="John">
                     </div>
                     
                     <div class="form-group">
                         <label for="last_name">Last Name</label>
-                        <input type="text" id="last_name" name="last_name" required>
+                        <input type="text" id="last_name" name="last_name" required placeholder="Doe">
                     </div>
                 </div>
                 
                 <div class="form-group">
                     <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required>
+                    <input type="text" id="username" name="username" required placeholder="johndoe123">
                 </div>
                 
                 <div class="form-group">
                     <label for="email">Email</label>
-                    <input type="email" id="email" name="email" required>
+                    <input type="email" id="email" name="email" required placeholder="john@example.com">
                 </div>
                 
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="password2">Confirm Password</label>
-                    <input type="password" id="password2" name="password2" required>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required placeholder="•••••••">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password2">Confirm</label>
+                        <input type="password" id="password2" name="password2" required placeholder="•••••••">
+                    </div>
                 </div>
                 
                 <div class="form-group">
@@ -70,7 +309,7 @@
                 
                 <div id="errorMessage" class="error-message"></div>
                 
-                <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+                <button type="submit" class="btn btn-primary" id="submitBtn">Create Account</button>
             </form>
             
             <p class="auth-footer">
@@ -94,12 +333,24 @@
             };
             
             const errorDiv = document.getElementById('errorMessage');
+            const btn = document.getElementById('submitBtn');
+            const originalBtnText = btn.textContent;
+            
+            // UI Feedback: Loading state
+            btn.textContent = "Creating Account...";
+            btn.style.opacity = "0.7";
+            btn.disabled = true;
+            errorDiv.style.display = 'none';
             
             try {
+                // GET CSRF TOKEN FROM META TAG
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
                 const response = await fetch('/api/auth/register/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken // <--- FIXED: Added CSRF Token Header
                     },
                     body: JSON.stringify(formData)
                 });
@@ -119,15 +370,27 @@
                     let errorText = '';
                     for (const [key, value] of Object.entries(data)) {
                         if (Array.isArray(value)) {
-                            errorText += value.join(', ') + ' ';
+                            errorText += value.join('. ') + ' ';
                         } else if (typeof value === 'string') {
                             errorText += value + ' ';
                         }
                     }
                     errorDiv.textContent = errorText || 'Registration failed. Please try again.';
+                    errorDiv.style.display = 'block';
+                    
+                    // Reset Button
+                    btn.textContent = originalBtnText;
+                    btn.style.opacity = "1";
+                    btn.disabled = false;
                 }
             } catch (error) {
                 errorDiv.textContent = 'An error occurred. Please try again.';
+                errorDiv.style.display = 'block';
+                
+                btn.textContent = originalBtnText;
+                btn.style.opacity = "1";
+                btn.disabled = false;
+                
                 console.error('Registration error:', error);
             }
         }
@@ -139,4 +402,3 @@
     </script>
 </body>
 </html>
-
